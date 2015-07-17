@@ -1,6 +1,7 @@
 var midPoint = function(latLon1,latLon2,callback){
 	//console.log(latLon1);
 //console.log('origin5');
+//console.log(latLon1,latLon2);
 	var lat1 =  latLon1.lat;
 	var lon1 =  latLon1.lng;
 
@@ -20,6 +21,8 @@ var midPoint = function(latLon1,latLon2,callback){
     var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
     var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx);
 
+    lat3=rad2deg(lat3);
+    lon3=rad2deg(lon3);
     //print out in degrees
     var a = {lat:lat3,lon:lon3 };
     //console.log(a);
@@ -33,6 +36,11 @@ function deg2rad(deg) {           // changing degree to randian
 
 
 
+};
+
+
+function rad2deg(rad) {           // changing degree to randian
+  return rad * (180/Math.PI);
 };
 
 
@@ -76,7 +84,7 @@ var getCityLatLong = function(cityname,callback)
 }
 
 getCityLatLong('chennai',function(err,data){
-	console.log("finish");
+	//console.log("finish");
 	console.log(data);
 });
 
