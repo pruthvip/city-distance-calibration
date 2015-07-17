@@ -7,7 +7,7 @@ CorrectionFactor.calculateRatios = function(distances, displacements){
 		ratios.push(distances[index] / displacements[index]);
 	}
 	return ratios;
-}
+};
 
 //function to find the average from a given array of values
 CorrectionFactor.average = function(values){
@@ -16,19 +16,17 @@ CorrectionFactor.average = function(values){
 		sum = sum + values[index];
 	}
 	return sum/values.length;
-}
+};
 
 //function to calculate the Correction Factor
 CorrectionFactor.calculateCF = function(distances, displacements, done){
 	var ratios = this.calculateRatios(distances, displacements);	//calculate the individual distance to displacement ratio of hotels
-console.log(ratios);
 	var newCF = this.average(ratios);								//calculate the average ratio i.e. Correction Factor
-console.log(newCF);
 	DBHandler.putCF(newCF, function(err){							//persist the new Correction Factor to DB
-		done(err);
+		done(err, newCF);
 	});													
 	
 	return newCF;
-}
+};
 
 module.exports = CorrectionFactor;

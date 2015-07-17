@@ -1,48 +1,62 @@
 var Update = {};
+var SearchRadius = require('./setupSR');
+var CorrectionFactor = require('./setupCF');
+var Distance = require('./distance');
+var Displacement = require('./displacement');
 var DBHandler = require('./dbhandler');
 var maxRadius = 30;
 
-//required functiond!!!!
+//required functions!!!!
 //getLatlongCity(cityName)
-//findDisplacement(latlongCity, latlongHotel)
-//findDistance(latlongCity, latlongHotel)
-//calculateRatio(distance, displacement)
 //getCF()
 //putCF()
-
+//
 
 //function to update the Correction Factor of a city after adding a new Hotel
-Update.updateCF = function(latlongHotel, cityName, done){
-	//calculate the distance to displacement ratio of the new Hotel from the City latitude and longitude
-	var newRatio = calculateRatio(findDistance(latlongHotel, getLatlongCity(cityName)), findDisplacement(latlongHotel, getLatlongCity(cityName)));
-	var oldRatio = DBHandler.getCF(cityName); 									//Fetch the old Correction Factor
-	var totalHotels = getTotalHotels(cityName); 								//Fetch the number of existing hotels in the given city
+Update.updateCF = function(cityName, latlongHotels, done){
+	var _this = this;
+	var latlongCity, distances, displacements;
 
-	var newCF = (((oldRatio * totalHotels) + newRatio) / (totalHotels + 1)); 	//new Correction Factor
+	
+	//get the longitude and latitude vaues of the city
+	findLatLongCity(cityName, function(err, latlongCity){					
+		//get displacements between hotels and the city coordinates
+		Distance.calculateDistances(latlongCity, latlongHotels, function(err, distances){
+			//get distances between hotels and the city coordinates	
+			Displacement.calculateDisplacements(latlongCity, latlongHotels, function(err, displacements){
+													
+				var oldCF = DBHandler.getCF(cityName); 						//Fetch the old Correction Factor
+				var totalHotels = DBHandler.getTotalHotels(cityName); 		//Fetch the number of existing hotels in the given city
+				//calculate the distance to displacement ratio of the new Hotels from the City latitude and longitude
+				var tempCF = CorrectionFactor.average(CorrectionFactor.calculateRatios(distances, displacements));
+				//calculation of new correction factor
+				var newCF = ((oldCF * totalHotels) + (tempCF * latlongHotels.length) / (totalHotels + latlongHotels.length)); 	
 
-	DBHandler.putCF(newCF, function(err){
-		done(err);
-	});																			//persist new Correction Factor to DB
-	return newCF;
-}
+				DBHandler.putCF(newCF, function(err){						//persist new Correction Factor to DB
+					done(err, newCF);
+				});		
+			});											
+		});
+	});
+};
 
 //function to update the Search Radius of a city after adding a new Hotel
-Update.updateSR = function(latlongHotel, cityName, done){
-	var oldRadius = DBHandler.getSR(cityName); 									//Fetch the old Correction Factor
-	var newRadius = findDisplacement(latlongHotel, getLatlongCity(cityName)); 	//calculate the distance of the hotel form the city latitude and Longitude
+Update.updateSR = function(latlongCity, latlongHotels, done){
+	var oldSR = DBHandler.getSR(latlongCity); 								//Fetch the old Correction Factor
+	var newSR, latlongCity, displacements; 									//calculate the distance of the hotel form the city latitude and Longitude
 
-	if(oldRadius >= newDistance){
-		done(err);
-		return oldRadius;
-	}else if(oldRadius < newDistance && newDistance <= maxRadius){
-		DBHandler.putSR(newRadius,function(err){								//persist the new Search Radius to DB
-			done(err);
-		});				
-		return newRadius;
-	}else{
-		done(err);
-		return oldRadius;
-	}
-}
+	//get displacements between hotels and the city coordinates
+	Displacement.calculateDisplacements(latlongCity, latlongHotels, function(err, displacements){	
+		console.log(displacements);	
+		newSR = SearchRadius.maxValue(displacements);						//max
+		console.log(newSR);
+		if(oldSR < newSR && newSR <= maxRadius)
+			DBHandler.putSR(newRadius,function(err){						//persist the new Search Radius to DB
+				done(err, newSR);
+			});				
+		else
+			done(err, oldSR);
+	});
+};
 
 module.exports = Update;
