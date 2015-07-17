@@ -28,12 +28,7 @@ var calculateLatlongDistance = function (origin,destination)
   return latlonDistance;
 };
 
-function deg2rad(deg) {           // changing degree to randian
-  return deg * (Math.PI/180);
 
-
-
-};
 
 var calculateLatlongDistances = function(originCity,destinations)
 {
